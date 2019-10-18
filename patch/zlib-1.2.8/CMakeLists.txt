@@ -35,6 +35,11 @@ else()
   set(_AMD64 OFF)
 endif()
 
+if(MINGW)
+  set(_ASM686 OFF)
+  set(_AMD64 OFF)
+endif()
+
 include(CheckTypeSize)
 include(CheckFunctionExists)
 include(CheckIncludeFile)

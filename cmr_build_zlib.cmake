@@ -48,10 +48,18 @@ option(COPY_ZLIB_CMAKE_BUILD_SCRIPTS "COPY_ZLIB_CMAKE_BUILD_SCRIPTS" ON)
 # Library specific vars and options
 #-----------------------------------------------------------------------
 
+if(BUILD_SHARED_LIBS)
+  option(ZLIB_SHARED "Build shared lib" ON)
+  option(ZLIB_STATIC "Build static lib" OFF)
+else()
+  option(ZLIB_SHARED "Build shared lib" OFF)
+  option(ZLIB_STATIC "Build static lib" ON)
+endif()
+option(ZLIB_EXAMPLES "Build zlib examples" OFF)
+option(ZLIB_TESTS "Build zlib tests" OFF)
+
 option(ASM686 "Enable building i686 assembly implementation" ON)
 option(AMD64 "Enable building amd64 assembly implementation" ON)
-option(ZLIB_BUILD_EXAMPLES "Enable building examples" OFF)
-option(ZLIB_BUILD_TESTS "Enable building tests" OFF)
 
 set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH
   "Installation directory for executables"

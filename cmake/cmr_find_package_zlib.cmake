@@ -30,10 +30,12 @@
 ## +++ Common part of the lib_cmaker_<lib_name> function +++
   set(find_LIB_VARS
     COPY_ZLIB_CMAKE_BUILD_SCRIPTS
+    ZLIB_SHARED
+    ZLIB_STATIC
+    ZLIB_EXAMPLES
+    ZLIB_TESTS
     ASM686
     AMD64
-    ZLIB_BUILD_EXAMPLES
-    ZLIB_BUILD_TESTS
     INSTALL_BIN_DIR
     INSTALL_LIB_DIR
     INSTALL_INC_DIR

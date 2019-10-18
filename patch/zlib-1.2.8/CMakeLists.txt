@@ -167,17 +167,19 @@ endif()
 
 if(MSVC)
     if(_ASM686)
-    ENABLE_LANGUAGE(ASM_MASM)
-        set(ZLIB_ASMS
-      contrib/masmx86/inffas32.asm
-      contrib/masmx86/match686.asm
-    )
+      enable_language(ASM_MASM)
+      set(ZLIB_ASMS
+        contrib/masmx86/inffas32.asm
+        contrib/masmx86/match686.asm
+      )
+      set_source_files_properties(${ZLIB_ASMS} PROPERTIES COMPILE_OPTIONS /safeseh)
     elseif (_AMD64)
-    ENABLE_LANGUAGE(ASM_MASM)
-        set(ZLIB_ASMS
-      contrib/masmx64/gvmat64.asm
-      contrib/masmx64/inffasx64.asm
-    )
+      list(APPEND ZLIB_SRCS contrib/masmx64/inffas8664.c)
+      enable_language(ASM_MASM)
+      set(ZLIB_ASMS
+        contrib/masmx64/gvmat64.asm
+        contrib/masmx64/inffasx64.asm
+      )
     endif()
 
   if(ZLIB_ASMS)

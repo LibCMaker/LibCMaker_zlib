@@ -697,3 +697,4 @@ notifications:
       - nfeodonit@yandex.com
     on_success: always
     on_failure: always
+

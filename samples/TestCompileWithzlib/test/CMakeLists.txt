@@ -84,7 +84,7 @@ if(BUILD_TESTING)
       COMMAND ${adb_exec} push ${test_NAME} "${TEST_WORK_DIR}/${test_NAME}"
     )
     add_test(NAME chmod_${test_NAME}
-      COMMAND ${adb_exec} shell chmod 6775 "${TEST_WORK_DIR}/${test_NAME}"
+      COMMAND ${adb_exec} shell chmod 775 "${TEST_WORK_DIR}/${test_NAME}"
     )
     add_test(NAME ${test_NAME} COMMAND ${adb_exec} shell
       "LD_LIBRARY_PATH=${TEST_WORK_DIR}/lib"  # :${LD_LIBRARY_PATH} || :/vendor/lib64:/system/lib64

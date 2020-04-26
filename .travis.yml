@@ -29,7 +29,7 @@ env:
 build_linux: &build_linux
   stage: Test
   os: linux
-  dist: xenial
+  dist: bionic
 
   env: &build_linux_env
     - cmr_TARGET_OS=linux
@@ -179,7 +179,7 @@ build_windows_msvc_winxp: &build_windows_msvc_winxp
 build_android: &build_android
   stage: Test
   os: linux
-  dist: xenial
+  dist: bionic
   addons:
     apt:
       packages:
@@ -207,6 +207,12 @@ build_android: &build_android
     - cmr_ANDROID_CPP_FEATURES="rtti exceptions"
     - cmr_ANDROID_TOOLCHAIN=clang
 
+    - ANDROID_HOME=${cmr_INSTALL_DIR}/android-sdk
+    - cmr_ANDROID_CMD_TOOLS_VERSION=6200805
+    - cmr_ANDROID_CMD_TOOLS_FILE_NAME=commandlinetools-linux-${cmr_ANDROID_CMD_TOOLS_VERSION}_latest.zip
+
+    - PATH=${ANDROID_HOME}/cmdline-tools/tools/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator:${PATH}
+
   before_install:
     - cp -r ${cmr_SAMPLE_SRC_DIR} ${cmr_WORK_DIR}
     - mkdir ${cmr_SAMPLE_LIB_DIR}
@@ -215,6 +221,9 @@ build_android: &build_android
     - mkdir ${cmr_BUILD_DIR}
     - mkdir ${cmr_INSTALL_DIR}
     - mkdir ${cmr_DOWNLOAD_DIR}
+    - mkdir -p ${ANDROID_HOME}/cmdline-tools
+    # https://stackoverflow.com/a/60598900
+    - mkdir -p ${ANDROID_HOME}/platforms  # 'platforms' dir must be, at least empty.
 
     - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.6/${cmr_CMAKE_RELEASE}.tar.gz
     - tar -xf ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.tar.gz --directory ${cmr_INSTALL_DIR}
@@ -222,12 +231,19 @@ build_android: &build_android
     - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://dl.google.com/android/repository/${cmr_ANDROID_NDK_PLATFORM}.zip
     - unzip -q ${cmr_DOWNLOAD_DIR}/${cmr_ANDROID_NDK_PLATFORM}.zip -d ${cmr_INSTALL_DIR}
 
+    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://dl.google.com/android/repository/${cmr_ANDROID_CMD_TOOLS_FILE_NAME}
+    - unzip -q ${cmr_DOWNLOAD_DIR}/${cmr_ANDROID_CMD_TOOLS_FILE_NAME} -d ${ANDROID_HOME}/cmdline-tools
+
     # NOTE: LibCMaker lib deps.
     - git clone https://github.com/LibCMaker/LibCMaker.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker
     - git clone https://github.com/LibCMaker/LibCMaker_GoogleTest.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_GoogleTest
 
   script:
     - cd ${cmr_BUILD_DIR}
+
+    - ${cmr_CMAKE_CMD} --version
+#    - ${CC} --version
+#    - ${CXX} --version
 
     - ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
         -Dcmr_BUILD_MULTIPROC_CNT=${cmr_JOBS_CNT}
@@ -251,7 +267,15 @@ build_android: &build_android
 
     - ${cmr_CMAKE_CMD} --build . -- ${cmr_JOBS}
 
-#    - ${cmr_CTEST_CMD} --output-on-failure
+    # Start the emulator.
+    # NOTE: Emulator for 'arm64-v8a' does not start on Travis CI with success.
+    - echo | avdmanager create avd -f -n fg_test -c 1024M -k "system-images;android-${cmr_ANDROID_EMULATOR_API_LEVEL};default;${cmr_ANDROID_ABI}"
+    - emulator -avd fg_test -memory 1024 -no-window -gpu auto -no-accel -no-snapshot -no-audio -camera-back none -camera-front none &
+    - ${cmr_REPO_DIR}/ci/android-wait-for-emulator.sh
+    - adb shell input keyevent 82 &
+
+    # Run the tests.
+    - ${cmr_CTEST_CMD} --output-on-failure
 
 
 # === macOS ===
@@ -518,6 +542,7 @@ jobs:
         - cmr_ANDROID_STL=c++_shared
         - cmr_ANDROID_ABI=armeabi-v7a
         - cmr_ANDROID_NATIVE_API_LEVEL=16
+        - cmr_ANDROID_EMULATOR_API_LEVEL=16
 
     - <<: *build_android
       name: "Android, shared, arm64-v8a"
@@ -527,6 +552,7 @@ jobs:
         - cmr_ANDROID_STL=c++_shared
         - cmr_ANDROID_ABI=arm64-v8a
         - cmr_ANDROID_NATIVE_API_LEVEL=21
+        - cmr_ANDROID_EMULATOR_API_LEVEL=24
 
     - <<: *build_android
       name: "Android, shared, x86"
@@ -536,6 +562,7 @@ jobs:
         - cmr_ANDROID_STL=c++_shared
         - cmr_ANDROID_ABI=x86
         - cmr_ANDROID_NATIVE_API_LEVEL=16
+        - cmr_ANDROID_EMULATOR_API_LEVEL=16
 
     - <<: *build_android
       name: "Android, shared, x86_64"
@@ -545,6 +572,7 @@ jobs:
         - cmr_ANDROID_STL=c++_shared
         - cmr_ANDROID_ABI=x86_64
         - cmr_ANDROID_NATIVE_API_LEVEL=21
+        - cmr_ANDROID_EMULATOR_API_LEVEL=21
 
 # Android, static
     - <<: *build_android
@@ -555,6 +583,7 @@ jobs:
         - cmr_ANDROID_STL=c++_static
         - cmr_ANDROID_ABI=armeabi-v7a
         - cmr_ANDROID_NATIVE_API_LEVEL=16
+        - cmr_ANDROID_EMULATOR_API_LEVEL=16
 
     - <<: *build_android
       name: "Android, static, arm64-v8a"
@@ -564,6 +593,7 @@ jobs:
         - cmr_ANDROID_STL=c++_static
         - cmr_ANDROID_ABI=arm64-v8a
         - cmr_ANDROID_NATIVE_API_LEVEL=21
+        - cmr_ANDROID_EMULATOR_API_LEVEL=24
 
     - <<: *build_android
       name: "Android, static, x86"
@@ -573,6 +603,7 @@ jobs:
         - cmr_ANDROID_STL=c++_static
         - cmr_ANDROID_ABI=x86
         - cmr_ANDROID_NATIVE_API_LEVEL=16
+        - cmr_ANDROID_EMULATOR_API_LEVEL=16
 
     - <<: *build_android
       name: "Android, static, x86_64"
@@ -582,6 +613,7 @@ jobs:
         - cmr_ANDROID_STL=c++_static
         - cmr_ANDROID_ABI=x86_64
         - cmr_ANDROID_NATIVE_API_LEVEL=21
+        - cmr_ANDROID_EMULATOR_API_LEVEL=21
 
 # macOS, clang, Xcode
     - <<: *build_macos_xcode

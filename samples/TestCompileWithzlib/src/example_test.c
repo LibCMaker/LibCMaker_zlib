@@ -43,8 +43,6 @@
 
 #if defined(VMS) || defined(RISCOS)
 #  define TESTFILE "foo-gz"
-#elif defined(__ANDROID__)
-#  define TESTFILE "/mnt/sdcard/foo.gz"
 #else
 #  define TESTFILE "foo.gz"
 #endif

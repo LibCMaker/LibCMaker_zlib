@@ -43,6 +43,8 @@
 
 #if defined(VMS) || defined(RISCOS)
 #  define TESTFILE "foo-gz"
+#elif defined(__ANDROID__)
+#  define TESTFILE "/mnt/sdcard/foo.gz"
 #else
 #  define TESTFILE "foo.gz"
 #endif
@@ -601,9 +603,8 @@ int maintest(void)
 #ifndef Z_SOLO
     test_compress(compr, comprLen, uncompr, uncomprLen);
 
-// FIXME: do not work on Android
-//    test_gzio(TESTFILE,
-//              uncompr, uncomprLen);
+    test_gzio(TESTFILE,
+              uncompr, uncomprLen);
 #endif
 
     test_deflate(compr, comprLen);

@@ -58,7 +58,7 @@ if(BUILD_TESTING)
     set(TEST_WORK_DIR "/data/local/tmp/LibCMaker_test")
 
     add_test(NAME rm_work_dir
-      COMMAND ${adb_exec} shell rm -r "${TEST_WORK_DIR}"
+      COMMAND ${adb_exec} shell "if [ -d \"${TEST_WORK_DIR}\" ] ; then rm -r \"${TEST_WORK_DIR}\" ; fi"
     )
 
     if(BUILD_SHARED_LIBS)

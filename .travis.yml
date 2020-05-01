@@ -275,6 +275,27 @@ build_android: &build_android
 
     # Start the emulator.
     # NOTE: Emulator for 'arm64-v8a' does not start on Travis CI with success.
+    # NOTE: Emulator for 'armeabi-v7a' API=16 on Linux executes programs
+    #       regularly with "Illegal instruction".
+    # NOTE: Emulator for 'armeabi-v7a' API=24 on Linux works fine.
+
+    # http://mywiki.wooledge.org/BashSheet
+    # [command] & [command]
+    # A single ampersand terminates an asynchronous command. An ampersand does
+    # the same thing as a semicolon or newline in that it indicates the end
+    # of a command, but it causes Bash to execute the command asynchronously.
+    # That means Bash will run it in the background and run the next command
+    # immediately after, without waiting for the former to end.
+    # Only the command before the & is executed asynchronously
+    # and you must not put a ; after the &, the & replaces the ;.
+#    - if [[ ${cmr_ANDROID_ABI} != "arm64-v8a" ]]; then
+#        echo | avdmanager create avd -f -n fg_test -c 1024M -k "system-images;android-${cmr_ANDROID_EMULATOR_API_LEVEL};default;${cmr_ANDROID_ABI}" ;
+#        emulator -avd fg_test -memory 1024 -no-window -gpu auto -no-accel -no-snapshot -no-audio -camera-back none -camera-front none &
+#        ${cmr_SAMPLE_LIB_DIR}/LibCMaker/ci/android-wait-for-emulator.sh ;
+#        adb shell input keyevent 82 &
+#      fi
+
+    - if [[ ${cmr_ANDROID_ABI} == "arm64-v8a" ]]; then travis_terminate 0 ; fi
     - echo | avdmanager create avd -f -n fg_test -c 1024M -k "system-images;android-${cmr_ANDROID_EMULATOR_API_LEVEL};default;${cmr_ANDROID_ABI}"
     - emulator -avd fg_test -memory 1024 -no-window -gpu auto -no-accel -no-snapshot -no-audio -camera-back none -camera-front none &
     - ${cmr_SAMPLE_LIB_DIR}/LibCMaker/ci/android-wait-for-emulator.sh
@@ -548,7 +569,7 @@ jobs:
         - cmr_ANDROID_STL=c++_shared
         - cmr_ANDROID_ABI=armeabi-v7a
         - cmr_ANDROID_NATIVE_API_LEVEL=16
-        - cmr_ANDROID_EMULATOR_API_LEVEL=16
+        - cmr_ANDROID_EMULATOR_API_LEVEL=24
 
     - <<: *build_android
       name: "Android, shared, arm64-v8a"
@@ -589,7 +610,7 @@ jobs:
         - cmr_ANDROID_STL=c++_static
         - cmr_ANDROID_ABI=armeabi-v7a
         - cmr_ANDROID_NATIVE_API_LEVEL=16
-        - cmr_ANDROID_EMULATOR_API_LEVEL=16
+        - cmr_ANDROID_EMULATOR_API_LEVEL=24
 
     - <<: *build_android
       name: "Android, static, arm64-v8a"
@@ -735,4 +756,3 @@ notifications:
       - nfeodonit@yandex.com
     on_success: always
     on_failure: always
-

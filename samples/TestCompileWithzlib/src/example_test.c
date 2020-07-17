@@ -41,6 +41,21 @@
 #  include <stdlib.h>
 #endif
 
+// https://stackoverflow.com/a/5920028
+#if __APPLE__
+    #include <TargetConditionals.h>
+    #if TARGET_IPHONE_SIMULATOR
+         // iOS Simulator
+    #elif TARGET_OS_IPHONE
+        // iOS device
+    #elif TARGET_OS_MAC
+        // Other kinds of Mac OS
+    #else
+    #   error "Unknown Apple platform"
+    #endif
+#endif
+
+
 #if defined(VMS) || defined(RISCOS)
 #  define TESTFILE "foo-gz"
 #else
@@ -601,9 +616,36 @@ int maintest(void)
 #ifndef Z_SOLO
     test_compress(compr, comprLen, uncompr, uncomprLen);
 
+// https://stackoverflow.com/a/5920028
+#if __APPLE__
+    //#include <TargetConditionals.h>
+    #if TARGET_IPHONE_SIMULATOR
+        // iOS Simulator
+
+        // https://stackoverflow.com/a/39022407
+        char buffer[256];
+
+        // HOME is the home directory of your application
+        // points to the root of your sandbox.
+        strcpy(buffer,getenv("HOME"));
+
+        // Concatenating the path string returned from HOME.
+        strcat(buffer,"/Documents/foo.gz");
+
+        test_gzio(buffer, uncompr, uncomprLen);
+
+    #elif TARGET_OS_IPHONE
+        // iOS device
+    #elif TARGET_OS_MAC
+        // Other kinds of Mac OS
+    #else
+    #   error "Unknown Apple platform"
+    #endif
+#else  // NOT __APPLE__
     test_gzio(TESTFILE,
               uncompr, uncomprLen);
-#endif
+#endif  // __APPLE__
+#endif  // Z_SOLO
 
     test_deflate(compr, comprLen);
     test_inflate(compr, comprLen, uncompr, uncomprLen);

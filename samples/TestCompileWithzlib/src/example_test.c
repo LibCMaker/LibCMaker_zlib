@@ -43,6 +43,7 @@
 
 // https://stackoverflow.com/a/5920028
 #if __APPLE__
+    #include <string.h>
     #include <TargetConditionals.h>
     #if TARGET_IPHONE_SIMULATOR
          // iOS Simulator
@@ -54,7 +55,6 @@
     #   error "Unknown Apple platform"
     #endif
 #endif
-
 
 #if defined(VMS) || defined(RISCOS)
 #  define TESTFILE "foo-gz"

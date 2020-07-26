@@ -29,9 +29,9 @@
 # Lib's name, version, paths
 #-----------------------------------------------------------------------
 
-set(ZLIB_lib_NAME      "zlib")
-set(ZLIB_lib_VERSION   "1.2.8")
-set(ZLIB_lib_DIR       "${CMAKE_CURRENT_LIST_DIR}")
+set(ZLIB_lib_NAME "zlib")
+set(ZLIB_lib_VERSION "1.2.8" CACHE STRING "ZLIB_lib_VERSION")
+set(ZLIB_lib_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE PATH "ZLIB_lib_DIR")
 
 # To use our Find<LibName>.cmake.
 list(APPEND CMAKE_MODULE_PATH "${ZLIB_lib_DIR}/cmake/modules")

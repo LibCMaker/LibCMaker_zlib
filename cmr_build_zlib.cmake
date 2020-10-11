@@ -61,19 +61,19 @@ option(ZLIB_TESTS "Build zlib tests" OFF)
 option(ASM686 "Enable building i686 assembly implementation" ON)
 option(AMD64 "Enable building amd64 assembly implementation" ON)
 
-set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH
+set(INSTALL_BIN_DIR "${cmr_INSTALL_DIR}/bin" CACHE PATH
   "Installation directory for executables"
 )
-set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH
+set(INSTALL_LIB_DIR "${cmr_INSTALL_DIR}/lib" CACHE PATH
   "Installation directory for libraries"
 )
-set(INSTALL_INC_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH
+set(INSTALL_INC_DIR "${cmr_INSTALL_DIR}/include" CACHE PATH
   "Installation directory for headers"
 )
-set(INSTALL_MAN_DIR "${CMAKE_INSTALL_PREFIX}/share/man" CACHE PATH
+set(INSTALL_MAN_DIR "${cmr_INSTALL_DIR}/share/man" CACHE PATH
   "Installation directory for manual pages"
 )
-set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH
+set(INSTALL_PKGCONFIG_DIR "${cmr_INSTALL_DIR}/share/pkgconfig" CACHE PATH
   "Installation directory for pkgconfig (.pc) files"
 )
 

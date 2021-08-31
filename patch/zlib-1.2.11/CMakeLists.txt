@@ -1,12 +1,17 @@
-cmake_minimum_required(VERSION 2.4.4)
-set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
+cmake_minimum_required(VERSION 3.0)
+#set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 
 project(zlib C)
 
 set(VERSION "1.2.11")
 
-option(ASM686 "Enable building i686 assembly implementation")
-option(AMD64 "Enable building amd64 assembly implementation")
+option(ZLIB_SHARED    "Build shared lib" ON)
+option(ZLIB_STATIC    "Build static lib" ON)
+option(ZLIB_EXAMPLES  "Build zlib examples" OFF)
+option(ZLIB_TESTS     "Build zlib tests" OFF)
+
+option(ASM686 "Enable building i686 assembly implementation" OFF)
+option(AMD64 "Enable building amd64 assembly implementation" OFF)
 
 set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "Installation directory for executables")
 set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Installation directory for libraries")
@@ -14,11 +19,34 @@ set(INSTALL_INC_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "Installation d
 set(INSTALL_MAN_DIR "${CMAKE_INSTALL_PREFIX}/share/man" CACHE PATH "Installation directory for manual pages")
 set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
 
+if(NOT ZLIB_SHARED AND NOT ZLIB_STATIC)
+  message(SEND_ERROR
+    "No library variant selected to build. "
+    "Please enable at least one of the following options: "
+    "ZLIB_SHARED, ZLIB_STATIC")
+endif()
+
+set(_ASM686 ${ASM686})
+set(_AMD64 ${AMD64})
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(_ASM686 OFF)
+else()
+  set(_AMD64 OFF)
+endif()
+
+if(MINGW)
+  set(_ASM686 OFF)
+  set(_AMD64 OFF)
+endif()
+
 include(CheckTypeSize)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
-enable_testing()
+if(ZLIB_EXAMPLES AND ZLIB_TESTS)
+  enable_testing()
+endif()
 
 check_include_file(sys/types.h HAVE_SYS_TYPES_H)
 check_include_file(stdint.h    HAVE_STDINT_H)
@@ -80,9 +108,9 @@ endif()
 
 set(ZLIB_PC ${CMAKE_CURRENT_BINARY_DIR}/zlib.pc)
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/zlib.pc.cmakein
-		${ZLIB_PC} @ONLY)
+    ${ZLIB_PC} @ONLY)
 configure_file(	${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.cmakein
-		${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
+    ${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 
 
@@ -130,36 +158,38 @@ if(NOT MINGW)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCC)
-    if(ASM686)
+    if(_ASM686)
         set(ZLIB_ASMS contrib/asm686/match.S)
-    elseif (AMD64)
+    elseif (_AMD64)
         set(ZLIB_ASMS contrib/amd64/amd64-match.S)
     endif ()
 
-	if(ZLIB_ASMS)
-		add_definitions(-DASMV)
-		set_source_files_properties(${ZLIB_ASMS} PROPERTIES LANGUAGE C COMPILE_FLAGS -DNO_UNDERLINE)
-	endif()
+  if(ZLIB_ASMS)
+    add_definitions(-DASMV)
+    set_source_files_properties(${ZLIB_ASMS} PROPERTIES LANGUAGE C COMPILE_FLAGS -DNO_UNDERLINE)
+  endif()
 endif()
 
 if(MSVC)
-    if(ASM686)
-		ENABLE_LANGUAGE(ASM_MASM)
-        set(ZLIB_ASMS
-			contrib/masmx86/inffas32.asm
-			contrib/masmx86/match686.asm
-		)
-    elseif (AMD64)
-		ENABLE_LANGUAGE(ASM_MASM)
-        set(ZLIB_ASMS
-			contrib/masmx64/gvmat64.asm
-			contrib/masmx64/inffasx64.asm
-		)
+    if(_ASM686)
+      enable_language(ASM_MASM)
+      set(ZLIB_ASMS
+        contrib/masmx86/inffas32.asm
+        contrib/masmx86/match686.asm
+      )
+      set_source_files_properties(${ZLIB_ASMS} PROPERTIES COMPILE_OPTIONS /safeseh)
+    elseif (_AMD64)
+      list(APPEND ZLIB_SRCS contrib/masmx64/inffas8664.c)
+      enable_language(ASM_MASM)
+      set(ZLIB_ASMS
+        contrib/masmx64/gvmat64.asm
+        contrib/masmx64/inffasx64.asm
+      )
     endif()
 
-	if(ZLIB_ASMS)
-		add_definitions(-DASMV -DASMINF)
-	endif()
+  if(ZLIB_ASMS)
+    add_definitions(-DASMV -DASMINF)
+  endif()
 endif()
 
 # parse the full version number from zlib.h and include in ZLIB_FULL_VERSION
@@ -183,12 +213,19 @@ if(MINGW)
     set(ZLIB_DLL_SRCS ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj)
 endif(MINGW)
 
-add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
-add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
-set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
-set_target_properties(zlib PROPERTIES SOVERSION 1)
+if(ZLIB_SHARED)
+  set(ZLIB_SHARED_TARGET zlib)
+  add_library(${ZLIB_SHARED_TARGET} SHARED ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+  set_target_properties(${ZLIB_SHARED_TARGET} PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
+  set_target_properties(${ZLIB_SHARED_TARGET} PROPERTIES SOVERSION 1)
+endif()
 
-if(NOT CYGWIN)
+if(ZLIB_STATIC)
+  set(ZLIB_STATIC_TARGET zlibstatic)
+  add_library(${ZLIB_STATIC_TARGET} STATIC ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+endif()
+
+if(ZLIB_SHARED AND NOT CYGWIN)
     # This property causes shared libraries on Linux to have the full version
     # encoded into their final filename.  We disable this on Cygwin because
     # it causes cygz-${ZLIB_FULL_VERSION}.dll to be created when cygz.dll
@@ -196,22 +233,22 @@ if(NOT CYGWIN)
     #
     # This has no effect with MSVC, on that platform the version info for
     # the DLL comes from the resource file win32/zlib1.rc
-    set_target_properties(zlib PROPERTIES VERSION ${ZLIB_FULL_VERSION})
+    set_target_properties(${ZLIB_SHARED_TARGET} PROPERTIES VERSION ${ZLIB_FULL_VERSION})
 endif()
 
 if(UNIX)
     # On unix-like platforms the library is almost always called libz
-   set_target_properties(zlib zlibstatic PROPERTIES OUTPUT_NAME z)
-   if(NOT APPLE)
-     set_target_properties(zlib PROPERTIES LINK_FLAGS "-Wl,--version-script,\"${CMAKE_CURRENT_SOURCE_DIR}/zlib.map\"")
+   set_target_properties(${ZLIB_SHARED_TARGET} ${ZLIB_STATIC_TARGET} PROPERTIES OUTPUT_NAME z)
+   if(ZLIB_SHARED AND NOT APPLE)
+     set_target_properties(${ZLIB_SHARED_TARGET} PROPERTIES LINK_FLAGS "-Wl,--version-script,\"${CMAKE_CURRENT_SOURCE_DIR}/zlib.map\"")
    endif()
-elseif(BUILD_SHARED_LIBS AND WIN32)
+elseif(ZLIB_SHARED AND WIN32)
     # Creates zlib1.dll when building shared library version
-    set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
+    set_target_properties(${ZLIB_SHARED_TARGET} PROPERTIES SUFFIX "1.dll")
 endif()
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
-    install(TARGETS zlib zlibstatic
+    install(TARGETS ${ZLIB_SHARED_TARGET} ${ZLIB_STATIC_TARGET}
         RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
         ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
         LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
@@ -230,20 +267,26 @@ endif()
 # Example binaries
 #============================================================================
 
-add_executable(example test/example.c)
-target_link_libraries(example zlib)
-add_test(example example)
+if(ZLIB_EXAMPLES AND ZLIB_SHARED)
+  add_executable(example test/example.c)
+  target_link_libraries(example ${ZLIB_SHARED_TARGET})
+  if(ZLIB_TESTS)
+    add_test(example example)
+  endif()
 
-add_executable(minigzip test/minigzip.c)
-target_link_libraries(minigzip zlib)
+  add_executable(minigzip test/minigzip.c)
+  target_link_libraries(minigzip ${ZLIB_SHARED_TARGET})
 
-if(HAVE_OFF64_T)
-    add_executable(example64 test/example.c)
-    target_link_libraries(example64 zlib)
-    set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
-    add_test(example64 example64)
+  if(HAVE_OFF64_T)
+      add_executable(example64 test/example.c)
+      target_link_libraries(example64 ${ZLIB_SHARED_TARGET})
+      set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+      if(ZLIB_TESTS)
+        add_test(example64 example64)
+      endif()
 
-    add_executable(minigzip64 test/minigzip.c)
-    target_link_libraries(minigzip64 zlib)
-    set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+      add_executable(minigzip64 test/minigzip.c)
+      target_link_libraries(minigzip64 ${ZLIB_SHARED_TARGET})
+      set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+  endif()
 endif()

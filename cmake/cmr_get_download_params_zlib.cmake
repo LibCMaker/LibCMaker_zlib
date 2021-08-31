@@ -31,8 +31,13 @@
     set(arch_file_sha
       "36658cb768a54c1d4dec43c3116c27ed893e88b02ecfcb44f2166f9c0b7f2a0d")
   endif()
+  if(version VERSION_EQUAL "1.2.11")
+    set(arch_file_sha
+      "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1")
+  endif()
 
-  # http://prdownloads.sourceforge.net/libpng/zlib-1.2.8.tar.gz?download
+  # https://zlib.net/zlib-1.2.11.tar.gz
+  # http://prdownloads.sourceforge.net/libpng/zlib-1.2.11.tar.gz?download
   set(base_url "http://prdownloads.sourceforge.net/libpng")
   set(src_dir_name    "zlib-${version}")
   set(arch_file_name  "${src_dir_name}.tar.gz")

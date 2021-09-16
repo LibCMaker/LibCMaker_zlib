@@ -37,8 +37,9 @@
   endif()
 
   # https://zlib.net/zlib-1.2.11.tar.gz
+  set(base_url "https://zlib.net")
   # http://prdownloads.sourceforge.net/libpng/zlib-1.2.11.tar.gz?download
-  set(base_url "http://prdownloads.sourceforge.net/libpng")
+  #set(base_url "http://prdownloads.sourceforge.net/libpng")
   set(src_dir_name    "zlib-${version}")
   set(arch_file_name  "${src_dir_name}.tar.gz")
   set(unpack_to_dir   "${unpacked_dir}/${src_dir_name}")

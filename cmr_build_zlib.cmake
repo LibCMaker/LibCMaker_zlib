@@ -58,8 +58,8 @@ endif()
 option(ZLIB_EXAMPLES "Build zlib examples" OFF)
 option(ZLIB_TESTS "Build zlib tests" OFF)
 
-option(ASM686 "Enable building i686 assembly implementation" ON)
-option(AMD64 "Enable building amd64 assembly implementation" ON)
+option(ASM686 "Enable building i686 assembly implementation" Off)
+option(AMD64 "Enable building amd64 assembly implementation" Off)
 
 set(INSTALL_BIN_DIR "${cmr_INSTALL_DIR}/bin" CACHE PATH
   "Installation directory for executables"
